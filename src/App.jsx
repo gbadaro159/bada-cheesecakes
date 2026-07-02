@@ -34,24 +34,37 @@ const IMGS = {
 };
 
 const PRODUCTS = [
-  { id:1, name:'Frutas Vermelhas',      desc:'Creme Badá original com calda artesanal de frutas vermelhas — a mais pedida.',           tag:'Mais Pedido', prices:{M:65,G:95},  img:IMGS.frutasVermelhasCard },
-  { id:2, name:'Dark Maracujá Trufada', desc:'Base de chocolate amargo, creme Badá, ganache e calda artesanal de maracujá.',           tag:null,          prices:{M:70,G:100}, img:IMGS.darkMaracujaCard },
-  { id:3, name:'Oreo com Nutella',      desc:'Base Oreo triturado, creme Badá cremoso e calda generosa de Nutella artesanal.',         tag:null,          prices:{M:70,G:100}, img:IMGS.oreoCard },
-  { id:4, name:'Badanoffe',             desc:'A releitura Badá do banoffee — creme exclusivo, banana caramelizada e toffee artesanal.', tag:'Exclusivo',   prices:{M:70,G:100}, img:IMGS.badanoffeCard },
-  { id:5, name:'Morango',               desc:'Creme Badá com calda generosa de morango fresco artesanal.',                             tag:null,          prices:{M:65,G:95},  img:IMGS.frutasVermelhasFatia },
+  { id:1, name:'Frutas Vermelhas',      desc:'Creme Badá original com calda artesanal de frutas vermelhas — a mais pedida.',           tag:'Mais Pedido', prices:{M:130,G:150}, img:IMGS.frutasVermelhasCard },
+  { id:2, name:'Dark Maracujá Trufada', desc:'Base de chocolate amargo, creme Badá, ganache e calda artesanal de maracujá.',           tag:null,          prices:{M:130,G:150}, img:IMGS.darkMaracujaCard },
+  { id:3, name:'Oreo com Nutella',      desc:'Base Oreo triturado, creme Badá cremoso e calda generosa de Nutella artesanal.',         tag:null,          prices:{M:130,G:150}, img:IMGS.oreoCard },
+  { id:4, name:'Badanoffe',             desc:'A releitura Badá do banoffee — creme exclusivo, banana caramelizada e toffee artesanal.', tag:'Exclusivo',   prices:{M:130,G:150}, img:IMGS.badanoffeCard },
+  { id:5, name:'Torta Twix de Laranja', desc:'Base de biscoito, mousse de chocolate meio amargo, caramelo com flor de sal, nibs de cacau e laranja cristalizada.', tag:'Premium', prices:{M:130,G:150}, img:IMGS.darkMaracujaFatia },
+  { id:6, name:'Torta de Ninho com Nutella', tipo:'especial',
+    desc:'Mousse de Ninho levíssima sobre base de Oreo, coberta com Nutella e leite em pó peneirado. O sucesso do momento.',
+    tag:'Novidade',
+    prices:{ M:145, G:165, GG:230 },
+    sizesInfo:{
+      M:  { label:'Torta Média',  sub:'21 cm · 8 fatias'  },
+      G:  { label:'Torta Grande', sub:'28 cm · 12 fatias' },
+      GG: { label:'Torta GG',     sub:'Dobro de mousse · para os mais apaixonados pelo sabor' },
+    },
+    img:IMGS.oreoCard, // ← substituir pela foto da Torta de Ninho quando chegar
+  },
 ];
 
 const PRODUTO_PERSONALIZADA = {
   id:99, name:'Cheesecake Personalizada',
   desc:'Monte sua torta do zero. Base, creme e calda — cada detalhe do seu jeito.',
-  tag:'Exclusivo', prices:{M:80,G:115}, img:IMGS.personalizada,
+  tag:'Exclusivo', prices:{M:130,G:150}, img:IMGS.personalizada,
 };
 
 const BASES        = ['Tradicional (maisena)', 'Oreo', 'Chocolate Amargo'];
 const CREMES       = ['Creme Badá Original', 'Creme de Maracujá', 'Creme de Morango', 'Creme Dark Chocolate'];
-const CALDAS       = ['Frutas Vermelhas', 'Maracujá', 'Nutella', 'Ganache Dark', 'Morango Fresco', 'Caramelo'];
-const EXTRA_PRICE  = 8;
-const TOPPING_PRICE = 0; // ← defina o valor quando estiver pronto
+const CALDAS       = ['Frutas Vermelhas', 'Maracujá', 'Ganache de Nutella', 'Caramelo com Flor de Sal', 'Nutella Pura'];
+const EXTRA_CALDA_PRICE = 10; // ← R$10 cada calda extra
+const EXTRA_PRICE  = 10;
+const TOPPING_PRICE   = 0;   // ← defina o valor quando estiver pronto
+const DOBRO_CREME_PRICE = 50; // ← upgrade dobro de creme (Ninho: R$65)
 const TOPPINGS = [
   { id:'t1', nome:'Frutas Frescas',     detalhe:'morango, mirtilo ou framboesa' },
   { id:'t2', nome:'Farofa de Oreo',     detalhe:'crocante e irresistível' },
@@ -145,6 +158,45 @@ function BtnOutline({ children, onClick, style={} }) {
   );
 }
 
+
+// ─── TOGGLE DOBRO DE CREME ────────────────────────────────────────────────────
+function DobroCreme({ checked, onChange, isNinho }) {
+  const extra = isNinho ? 65 : 50;
+  return (
+    <div onClick={onChange} style={{
+      display:'flex', alignItems:'center', justifyContent:'space-between',
+      padding:'16px 18px', marginBottom:24, cursor:'pointer',
+      background: checked ? 'rgba(196,30,36,.07)' : '#1A1610',
+      border:'1px solid '+(checked ? '#C41E24' : 'rgba(201,169,110,0.15)'),
+      transition:'all .2s',
+    }}>
+      <div>
+        <div style={{fontSize:12,color:checked?'#C41E24':'#F5F0E8',fontFamily:"'DM Sans',sans-serif",fontWeight:400,marginBottom:4}}>
+          Dobro de {isNinho?'mousse':'creme'}
+        </div>
+        <div style={{fontSize:11,color:'rgba(245,240,232,.38)',fontFamily:"'DM Sans',sans-serif",fontWeight:300}}>
+          {isNinho?'O dobro de mousse de Ninho — para os mais apaixonados pelo sabor':'Quantidade dobrada de creme na sua torta'}
+        </div>
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:12,flexShrink:0,marginLeft:16}}>
+        <span style={{fontFamily:"'Cormorant Garamond',serif",fontSize:16,color:'#C9A96E'}}>+R$ {extra.toFixed(2).replace('.',',')}</span>
+        <div style={{
+          width:44,height:24,borderRadius:99,
+          background:checked?'#C41E24':'rgba(255,255,255,.12)',
+          position:'relative',transition:'background .2s',flexShrink:0,
+        }}>
+          <div style={{
+            position:'absolute',top:3,
+            left:checked?20:3,
+            width:18,height:18,borderRadius:'50%',
+            background:'#F5F0E8',transition:'left .2s',
+          }}/>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── TOPPINGS PANEL ───────────────────────────────────────────────────────────
 function ToppingsPanel({ selected, onToggle, isMobile }) {
   const priceLabel = TOPPING_PRICE===0
@@ -209,21 +261,23 @@ export default function App() {
 
   const go = p => { setPg(p); setMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); };
 
-  const openTradicional = p => { setModal({produto:p,modo:'tradicional'}); setCust({sz:'M',extras:[],toppings:[],qty:1}); };
-  const openPersonalizada = () => { setModal({produto:PRODUTO_PERSONALIZADA,modo:'personalizada'}); setCust({sz:'M',base:BASES[0],creme:CREMES[0],calda:CALDAS[0],extras:[],toppings:[],qty:1}); };
+  const openTradicional = p => { setModal({produto:p,modo:'tradicional'}); setCust({sz:'M',extras:[],toppings:[],dobroCreme:false,qty:1}); };
+  const openPersonalizada = () => { setModal({produto:PRODUTO_PERSONALIZADA,modo:'personalizada'}); setCust({sz:'M',base:BASES[0],creme:CREMES[0],calda:CALDAS[0],extras:[],toppings:[],dobroCreme:false,qty:1}); };
 
   const toggleExtra   = c  => setCust(v=>({...v,extras:  v.extras.includes(c)  ?v.extras.filter(x=>x!==c)  :[...v.extras,  c]}));
   const toggleTopping = id => setCust(v=>({...v,toppings:v.toppings.includes(id)?v.toppings.filter(x=>x!==id):[...v.toppings,id]}));
 
   const itemPrice = () => {
     if(!modal) return 0;
-    return (modal.produto.prices[cust.sz]+cust.extras.length*EXTRA_PRICE+cust.toppings.length*TOPPING_PRICE)*cust.qty;
+    const dobroVal = cust.dobroCreme ? (modal.produto.id===6 ? 65 : DOBRO_CREME_PRICE) : 0;
+    return (modal.produto.prices[cust.sz]+cust.extras.length*EXTRA_PRICE+cust.toppings.length*TOPPING_PRICE+dobroVal)*cust.qty;
   };
 
   const addToCart = () => {
     const p=modal.produto;
-    const unit=p.prices[cust.sz]+cust.extras.length*EXTRA_PRICE+cust.toppings.length*TOPPING_PRICE;
-    const entry={id:Date.now(),pid:p.id,name:p.name,tipo:modal.modo,sz:cust.sz,extras:[...cust.extras],toppings:[...cust.toppings],qty:cust.qty,unit,total:unit*cust.qty};
+    const dobroVal = cust.dobroCreme ? (p.id===6 ? 65 : DOBRO_CREME_PRICE) : 0;
+    const unit=p.prices[cust.sz]+cust.extras.length*EXTRA_PRICE+cust.toppings.length*TOPPING_PRICE+dobroVal;
+    const entry={id:Date.now(),pid:p.id,name:p.name,tipo:modal.modo,sz:cust.sz,extras:[...cust.extras],toppings:[...cust.toppings],dobroCreme:cust.dobroCreme,qty:cust.qty,unit,total:unit*cust.qty};
     if(modal.modo==='personalizada'){entry.base=cust.base;entry.creme=cust.creme;entry.calda=cust.calda;}
     setCart(c=>[...c,entry]);
     setModal(null);
@@ -601,13 +655,22 @@ export default function App() {
                 <div style={{padding:isMobile?'18px 16px 22px':'24px 24px 28px'}}>
                   <div style={{fontFamily:SERIF,fontSize:isMobile?20:22,color:CREAM,marginBottom:7}}>{p.name}</div>
                   <div style={{fontSize:12,color:MUTED,lineHeight:1.75,marginBottom:18,fontWeight:300}}>{p.desc}</div>
-                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:18}}>
-                    {[['M','Médio','8 fatias'],['G','Grande','12 fatias']].map(([sz,l2,s2])=>(
-                      <div key={sz} style={{background:BG3,padding:'12px',textAlign:'center',border:`1px solid rgba(255,255,255,.04)`}}>
-                        <div style={{...lbl,fontSize:8,marginBottom:5}}>{l2} · {s2}</div>
-                        <div style={{fontFamily:SERIF,fontSize:18,color:CREAM}}>{R(p.prices[sz])}</div>
-                      </div>
-                    ))}
+                  <div style={{display:'grid',gridTemplateColumns:p.sizesInfo?'1fr 1fr 1fr':'1fr 1fr',gap:8,marginBottom:18}}>
+                    {p.sizesInfo
+                      ? Object.entries(p.sizesInfo).map(([sz,info])=>(
+                          <div key={sz} style={{background:BG3,padding:'12px',textAlign:'center',border:'1px solid rgba(255,255,255,.04)'}}>
+                            <div style={{...lbl,fontSize:7,marginBottom:4}}>{info.label}</div>
+                            <div style={{fontSize:9,color:MUTED,marginBottom:6,fontFamily:SANS}}>{info.sub}</div>
+                            <div style={{fontFamily:SERIF,fontSize:16,color:CREAM}}>{p.prices[sz]>0?R(p.prices[sz]):'A definir'}</div>
+                          </div>
+                        ))
+                      : [['M','Médio','8 fatias'],['G','Grande','12 fatias']].map(([sz,l2,s2])=>(
+                          <div key={sz} style={{background:BG3,padding:'12px',textAlign:'center',border:'1px solid rgba(255,255,255,.04)'}}>
+                            <div style={{...lbl,fontSize:8,marginBottom:5}}>{l2} · {s2}</div>
+                            <div style={{fontFamily:SERIF,fontSize:18,color:CREAM}}>{R(p.prices[sz])}</div>
+                          </div>
+                        ))
+                    }
                   </div>
                   <BtnRed style={{width:'100%',padding:'13px',textAlign:'center',display:'block',fontSize:isMobile?11:10}}>
                     Pedir este sabor
@@ -650,6 +713,7 @@ export default function App() {
                       </div>
                       <div style={{fontSize:11,color:MUTED,lineHeight:1.8}}>
                         {item.tipo==='personalizada'&&<>Base: {item.base}<br/>Creme: {item.creme}<br/>Calda: {item.calda}<br/></>}
+                        {item.dobroCreme&&<span style={{color:RED}}>Dobro de creme ativado<br/></span>}
                         {item.extras?.length>0&&<span style={{color:GOLD}}>Caldas extras: {item.extras.join(', ')}<br/></span>}
                         {item.toppings?.length>0&&<span style={{color:GOLD}}>Toppings: {item.toppings.map(id=>TOPPINGS.find(t=>t.id===id)?.nome).join(', ')}</span>}
                       </div>
@@ -876,20 +940,41 @@ export default function App() {
 
           <div style={{marginBottom:22}}>
             <div style={{...lbl,fontSize:9,marginBottom:12}}>Tamanho</div>
-            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
-              {[['M','Médio','8 fatias'],['G','Grande','12 fatias']].map(([v,l2,s2])=>(
-                <button key={v} onClick={()=>setCust(c=>({...c,sz:v}))} style={{
-                  padding:isMobile?16:18,textAlign:'left',cursor:'pointer',
-                  background:cust.sz===v?'rgba(196,30,36,.07)':BG3,
-                  border:`1px solid ${cust.sz===v?RED:'rgba(255,255,255,.06)'}`,
-                  color:cust.sz===v?RED:CREAM,transition:'all .2s',
-                }}>
-                  <div style={{fontSize:9,letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:6,fontFamily:SANS,color:MUTED}}>{l2} · {s2}</div>
-                  <div style={{fontFamily:SERIF,fontSize:isMobile?20:22}}>{R(modal.produto.prices[v])}</div>
-                </button>
-              ))}
+            <div style={{display:'grid',gridTemplateColumns:modal.produto.sizesInfo?'1fr':'1fr 1fr',gap:10}}>
+              {modal.produto.sizesInfo
+                ? Object.entries(modal.produto.sizesInfo).map(([v,info])=>(
+                    <button key={v} onClick={()=>setCust(c=>({...c,sz:v}))} style={{
+                      padding:isMobile?14:16,textAlign:'left',cursor:'pointer',
+                      background:cust.sz===v?'rgba(196,30,36,.07)':BG3,
+                      border:'1px solid '+(cust.sz===v?RED:'rgba(255,255,255,.06)'),
+                      color:cust.sz===v?RED:CREAM,transition:'all .2s',
+                      display:'flex',justifyContent:'space-between',alignItems:'center',
+                    }}>
+                      <div>
+                        <div style={{fontSize:9,letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:5,fontFamily:SANS,color:MUTED}}>{info.sub}</div>
+                        <div style={{fontFamily:SERIF,fontSize:isMobile?17:19}}>{info.label}</div>
+                      </div>
+                      <div style={{fontFamily:SERIF,fontSize:isMobile?18:20,color:GOLD,flexShrink:0,marginLeft:12}}>
+                        {modal.produto.prices[v]>0?R(modal.produto.prices[v]):'A definir'}
+                      </div>
+                    </button>
+                  ))
+                : [['M','Médio','8 fatias'],['G','Grande','12 fatias']].map(([v,l2,s2])=>(
+                    <button key={v} onClick={()=>setCust(c=>({...c,sz:v}))} style={{
+                      padding:isMobile?16:18,textAlign:'left',cursor:'pointer',
+                      background:cust.sz===v?'rgba(196,30,36,.07)':BG3,
+                      border:'1px solid '+(cust.sz===v?RED:'rgba(255,255,255,.06)'),
+                      color:cust.sz===v?RED:CREAM,transition:'all .2s',
+                    }}>
+                      <div style={{fontSize:9,letterSpacing:'0.12em',textTransform:'uppercase',marginBottom:6,fontFamily:SANS,color:MUTED}}>{l2} · {s2}</div>
+                      <div style={{fontFamily:SERIF,fontSize:isMobile?20:22}}>{R(modal.produto.prices[v])}</div>
+                    </button>
+                  ))
+              }
             </div>
           </div>
+
+          <DobroCreme checked={cust.dobroCreme} onChange={()=>setCust(c=>({...c,dobroCreme:!c.dobroCreme}))} isNinho={modal.produto.id===6}/>
 
           <div style={{marginBottom:22}}>
             <div style={{...lbl,fontSize:9,marginBottom:12}}>
@@ -971,6 +1056,8 @@ export default function App() {
               ))}
             </div>
           </div>
+
+          <DobroCreme checked={cust.dobroCreme} onChange={()=>setCust(c=>({...c,dobroCreme:!c.dobroCreme}))} isNinho={false}/>
 
           {[['base','Base da massa',BASES],['creme','Creme',CREMES],['calda','Calda principal',CALDAS]].map(([k,l2,opts])=>(
             <div key={k} style={{marginBottom:16}}>

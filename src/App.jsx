@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 
+// ─── MERCADO PAGO ────────────────────────────────────────────────────────────
+const MP_PUBLIC_KEY = 'APP_USR-f5f38b84-5ad5-45ce-93cd-9969da10bd56'; // teste
+
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const RED    = '#C41E24';
 const RED2   = '#A01820';
@@ -252,6 +255,8 @@ export default function App() {
   const [selDate,   setSelDate]  = useState(null);
   const [pay,       setPay]      = useState('pix');
   const [cardF,     setCardF]    = useState({num:'',name:'',exp:'',cvv:''});
+  const [mpLoading, setMpLoading] = useState(false);
+  const [mpError,   setMpError]   = useState('');
 
   const dates  = useMemo(getBizDates,[]);
   const frete  = useMemo(()=>dlv==='delivery'?getFrete(addr):{km:0,fee:0},[dlv,addr]);
@@ -260,6 +265,60 @@ export default function App() {
   const canPay = selDate&&(dlv==='pickup'||(frete&&!frete.err&&frete.fee!=null));
 
   const go = p => { setPg(p); setMenuOpen(false); window.scrollTo({top:0,behavior:'smooth'}); };
+
+  // ── CHECKOUT MERCADO PAGO ──────────────────────────────────────────────────
+  const handleMPCheckout = async () => {
+    setMpLoading(true);
+    setMpError('');
+    try {
+      const items = cart.map(item => ({
+        id: String(item.pid),
+        title: item.name + (item.dobroCreme ? ' (Dobro de Creme)' : ''),
+        description: `${item.sz==='M'?'Médio 8 fatias':'Grande 12 fatias'} · Qtd: ${item.qty}`,
+        quantity: item.qty,
+        unit_price: item.unit,
+        currency_id: 'BRL',
+      }));
+
+      if (dlv === 'delivery' && frete?.fee) {
+        items.push({
+          id: 'frete',
+          title: 'Frete',
+          quantity: 1,
+          unit_price: frete.fee,
+          currency_id: 'BRL',
+        });
+      }
+
+      const res = await fetch('/api/create-preference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items,
+          payer: user ? { email: user } : undefined,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao iniciar pagamento');
+
+      // Salva pedido no sessionStorage para recuperar após o redirect
+      sessionStorage.setItem('bada_pending_order', JSON.stringify({
+        cart, dlv, addr, selDate, frete, total,
+        customer: user || 'visitante',
+      }));
+
+      // Redireciona para o checkout do Mercado Pago
+      // sandbox_init_point = teste | init_point = produção
+      window.location.href = data.sandbox_init_point;
+
+    } catch (err) {
+      setMpError('Não foi possível iniciar o pagamento. Tente novamente ou use o WhatsApp.');
+      console.error(err);
+    } finally {
+      setMpLoading(false);
+    }
+  };
 
   const openTradicional = p => { setModal({produto:p,modo:'tradicional'}); setCust({sz:'M',extras:[],toppings:[],dobroCreme:false,qty:1}); };
   const openPersonalizada = () => { setModal({produto:PRODUTO_PERSONALIZADA,modo:'personalizada'}); setCust({sz:'M',base:BASES[0],creme:CREMES[0],calda:CALDAS[0],extras:[],toppings:[],dobroCreme:false,qty:1}); };
@@ -885,11 +944,27 @@ export default function App() {
             )}
           </div>
 
-          <BtnRed style={{width:'100%',padding:'16px',textAlign:'center',display:'block',fontSize:12,letterSpacing:'0.2em',marginBottom:12}}
-            onClick={()=>{go('confirmation');setCart([]);}}>
-            Confirmar Pedido
+          {mpError && (
+            <div style={{fontSize:12,color:RED,marginBottom:12,padding:'10px 14px',border:`1px solid rgba(196,30,36,.3)`,background:'rgba(196,30,36,.05)'}}>
+              {mpError}
+            </div>
+          )}
+          <BtnRed
+            disabled={mpLoading}
+            style={{width:'100%',padding:'16px',textAlign:'center',display:'block',fontSize:12,letterSpacing:'0.2em',marginBottom:12}}
+            onClick={handleMPCheckout}>
+            {mpLoading ? 'Aguarde...' : 'Pagar com Mercado Pago'}
           </BtnRed>
-          <BtnOutline onClick={()=>go('cart')} style={{width:'100%',padding:'14px',textAlign:'center',display:'block'}}>
+          <a href="https://wa.me/5511933769243" target="_blank" rel="noreferrer" style={{
+            display:'block',width:'100%',padding:'14px',textAlign:'center',
+            border:`1px solid rgba(37,211,102,.35)`,color:'#25D366',
+            fontSize:11,letterSpacing:'0.16em',textTransform:'uppercase',
+            fontFamily:SANS,marginBottom:12,transition:'all .2s',
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.borderColor='#25D366';e.currentTarget.style.background='rgba(37,211,102,.08)';}}
+          onMouseLeave={e=>{e.currentTarget.style.borderColor='rgba(37,211,102,.35)';e.currentTarget.style.background='transparent';}}
+          >Ou finalize pelo WhatsApp</a>
+          <BtnOutline onClick={()=>go('cart')} style={{width:'100%',padding:'13px',textAlign:'center',display:'block'}}>
             ← Voltar ao carrinho
           </BtnOutline>
         </div>

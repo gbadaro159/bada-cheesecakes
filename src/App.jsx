@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 
 // ─── MERCADO PAGO ────────────────────────────────────────────────────────────
-const MP_PUBLIC_KEY = 'APP_USR-f5f38b84-5ad5-45ce-93cd-9969da10bd56'; // teste
+const MP_PUBLIC_KEY = 'APP_USR-94d05bc8-4620-44bd-b0f1-93ebc44d18c0'; // teste
 
 // ─── PALETTE ──────────────────────────────────────────────────────────────────
 const RED    = '#C41E24';
@@ -310,7 +310,7 @@ export default function App() {
 
       // Redireciona para o checkout do Mercado Pago
       // sandbox_init_point = teste | init_point = produção
-      window.location.href = data.sandbox_init_point;
+      window.location.href = data.init_point;
 
     } catch (err) {
       setMpError('Não foi possível iniciar o pagamento. Tente novamente ou use o WhatsApp.');
@@ -901,47 +901,22 @@ export default function App() {
             <div style={{fontFamily:SERIF,fontSize:isMobile?26:32,color:GOLD}}>{R(total)}</div>
           </div>
 
+          {/* Informativo sobre formas de pagamento */}
           <div style={{background:BG2,border:`1px solid ${BORDER}`,padding:isMobile?16:24,marginBottom:20}}>
-            <div style={{...lbl,marginBottom:16}}>Selecione como pagar</div>
-            <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:24}}>
-              {[['pix','PIX'],['credit','Crédito 1x'],['debit','Débito'],['vr','VR']].map(([v,l2])=>(
-                <button key={v} onClick={()=>setPay(v)} style={{
-                  padding:isMobile?'13px 4px':'12px 6px',
-                  background:pay===v?'rgba(196,30,36,.08)':BG3,
-                  border:`1px solid ${pay===v?RED:'rgba(255,255,255,.06)'}`,
-                  color:pay===v?RED:MUTED,
-                  cursor:'pointer',fontSize:isMobile?10:9,letterSpacing:'0.12em',textTransform:'uppercase',fontFamily:SANS,transition:'all .2s',
-                }}>{l2}</button>
+            <div style={{...lbl,marginBottom:16}}>Formas de pagamento aceitas</div>
+            <div style={{display:'flex',gap:10,flexWrap:'wrap',marginBottom:8}}>
+              {['PIX','Cartão de Crédito','Cartão de Débito','Boleto'].map(m=>(
+                <span key={m} style={{
+                  fontSize:10,color:GOLD,padding:'5px 12px',
+                  border:`1px solid rgba(201,169,110,.25)`,
+                  background:'rgba(201,169,110,.05)',
+                  fontFamily:SANS,letterSpacing:'0.1em',
+                }}>{m}</span>
               ))}
             </div>
-            {pay==='pix'&&(
-              <div style={{textAlign:'center',padding:'24px 0'}}>
-                <div style={{width:130,height:130,background:'#fff',margin:'0 auto 16px',display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  <div style={{fontSize:10,color:'#333',textAlign:'center',padding:10,lineHeight:1.8}}>QR Code PIX<br/><span style={{fontSize:9,color:'#999'}}>(ilustrativo)</span></div>
-                </div>
-                <div style={{fontSize:13,color:MUTED,marginBottom:8}}>Chave PIX: (11) 93376-9243</div>
-                <div style={{fontSize:12,color:GOLD}}>Envie o comprovante pelo WhatsApp após o pagamento</div>
-              </div>
-            )}
-            {['credit','debit','vr'].includes(pay)&&(
-              <div>
-                {pay==='credit'&&<div style={{fontSize:12,color:GOLD,marginBottom:16,padding:'10px 14px',border:`1px solid rgba(201,169,110,.18)`,background:'rgba(201,169,110,.04)'}}>Cobrança em 1× — sem parcelamento</div>}
-                {[['num','Número do cartão','0000 0000 0000 0000'],['name','Nome como no cartão','NOME SOBRENOME']].map(([k,l2,ph])=>(
-                  <div key={k} style={{marginBottom:14}}>
-                    <label style={{...lbl,fontSize:9,display:'block',marginBottom:9}}>{l2}</label>
-                    <input style={inp} placeholder={ph} value={cardF[k]} onChange={e=>setCardF({...cardF,[k]:e.target.value})}/>
-                  </div>
-                ))}
-                <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
-                  {[['exp','Validade','MM/AA'],['cvv','CVV','•••']].map(([k,l2,ph])=>(
-                    <div key={k}>
-                      <label style={{...lbl,fontSize:9,display:'block',marginBottom:9}}>{l2}</label>
-                      <input style={inp} placeholder={ph} value={cardF[k]} onChange={e=>setCardF({...cardF,[k]:e.target.value})}/>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <p style={{fontSize:11,color:MUTED,lineHeight:1.8,fontWeight:300}}>
+              Você será redirecionado para o ambiente seguro do Mercado Pago para concluir o pagamento. PIX com aprovação instantânea.
+            </p>
           </div>
 
           {mpError && (

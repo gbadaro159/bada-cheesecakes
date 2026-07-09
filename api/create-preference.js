@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { items, payer, back_urls } = req.body;
+  const { items, payer, back_urls, metadata } = req.body;
 
   try {
     const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
@@ -18,6 +18,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         items,
         payer,
+        metadata,
+        notification_url: 'https://badacheesecakes.com.br/api/webhook-mp',
         back_urls: {
           success: back_urls?.success || 'https://badacheesecakes.com.br/?status=success',
           failure: back_urls?.failure || 'https://badacheesecakes.com.br/?status=failure',

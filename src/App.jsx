@@ -258,6 +258,46 @@ export default function App() {
   const [mpLoading, setMpLoading] = useState(false);
   const [mpError,   setMpError]   = useState('');
 
+  // ── RETORNO DO MERCADO PAGO ──────────────────────────────────────────────
+  // O MP redireciona de volta pra cá com ?status=success|failure|pending
+  // depois do pagamento. Aqui a gente lê isso, dispara a notificação
+  // (email + link de WhatsApp) e leva o cliente pra tela de confirmação.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    if (!status) return;
+
+    // limpa a URL pra não repetir esse fluxo se a pessoa der F5
+    window.history.replaceState({}, '', window.location.pathname);
+
+    if (status === 'success' || status === 'approved') {
+      const pendingRaw = sessionStorage.getItem('bada_pending_order');
+      if (pendingRaw) {
+        try {
+          const pending = JSON.parse(pendingRaw);
+          fetch('/api/notify-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pending),
+          }).catch(err => console.error('Erro ao notificar pedido:', err));
+        } catch (e) {
+          console.error('Erro ao ler pedido pendente:', e);
+        }
+        sessionStorage.removeItem('bada_pending_order');
+      }
+      setCart([]);
+      setPg('confirmation');
+    } else if (status === 'failure') {
+      setMpError('Pagamento não aprovado. Tente novamente ou finalize pelo WhatsApp.');
+      setPg('checkout');
+    } else if (status === 'pending') {
+      setMpError('Pagamento em análise (ex: boleto ou PIX pendente). Você recebe a confirmação assim que for aprovado.');
+      setPg('checkout');
+    }
+    window.scrollTo({ top: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const dates  = useMemo(getBizDates,[]);
   const frete  = useMemo(()=>dlv==='delivery'?getFrete(addr):{km:0,fee:0},[dlv,addr]);
   const sub    = cart.reduce((s,i)=>s+i.total,0);
@@ -290,12 +330,23 @@ export default function App() {
         });
       }
 
+      const pendingOrder = {
+        cart, dlv, addr, selDate, frete, total,
+        customer: user || 'visitante',
+      };
+
       const res = await fetch('/api/create-preference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items,
           payer: user ? { email: user } : undefined,
+          // Guarda um resumo do pedido na própria preferência do MP.
+          // Assim o webhook consegue montar a notificação mesmo que
+          // o cliente feche o navegador antes de voltar pro site.
+          metadata: {
+            order_summary: JSON.stringify(pendingOrder).slice(0, 2000),
+          },
         }),
       });
 
@@ -303,10 +354,7 @@ export default function App() {
       if (!res.ok) throw new Error(data.error || 'Erro ao iniciar pagamento');
 
       // Salva pedido no sessionStorage para recuperar após o redirect
-      sessionStorage.setItem('bada_pending_order', JSON.stringify({
-        cart, dlv, addr, selDate, frete, total,
-        customer: user || 'visitante',
-      }));
+      sessionStorage.setItem('bada_pending_order', JSON.stringify(pendingOrder));
 
       // Redireciona para o checkout do Mercado Pago
       // sandbox_init_point = teste | init_point = produção
